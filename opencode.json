@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org",
+  "permission": {
+    "read": {
+      "*": "allow",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow"
+    }
+  },
+  "plugin": [
+    "opencode-ignore"
+  ],
+  "watcher": {
+    "ignore": [
+      ".env",
+      ".env.*"
+    ]
+  }
+}
+
