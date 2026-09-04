@@ -77,7 +77,7 @@ def handle_unknown(update):
 if __name__ == '__main__':
     from dotenv import load_dotenv
     from pathlib import Path
-    load_dotenv(Path.home() / ".env")
+    load_dotenv(Path.home() / ".env-storage" / "credit-card-telegram-bot" / ".env")
 
     application = ApplicationBuilder().token(os.getenv("BOT_TOKEN")).build()
 
