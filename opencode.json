@@ -2,10 +2,10 @@
   "$schema": "https://json-schema.org",
   "permission": {
     "read": {
-      "*": "allow",
-      "*.env": "deny",
-      "*.env.*": "deny",
-      "*.env.example": "allow"
+      "**/.env": "deny",
+      "**/.env.*": "deny",
+      "**/.env.example": "allow",
+      "*": "allow"
     }
   },
   "plugin": [
@@ -13,9 +13,9 @@
   ],
   "watcher": {
     "ignore": [
-      ".env",
-      ".env.*"
+      "**/.env",
+      "**/.env.*"
     ]
   }
 }
-
+    
