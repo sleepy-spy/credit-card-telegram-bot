@@ -1,8 +1,4 @@
-EXISTING_CARDS = [
-    "uob prvi miles",
-    "hsbc revolution",
-    "uob krisflyer",
-]
+from src.card import Card, CARDS
 
 
 def parse_input(user_input: str) -> dict:
@@ -23,17 +19,21 @@ def parse_input(user_input: str) -> dict:
             "shop": shop,
         }
 
-    parts = text.rsplit(maxsplit=1)
-    if len(parts) == 2:
+    # [shop] [amount] [currency]
+    parts = text.rsplit(maxsplit=2)
+    if len(parts) == 3:
         amount_str = parts[1].lstrip("$")
-        if amount_str.isdigit():
+        if amount_str.replace(".", "").isdigit():
             return {
                 "action": "recommend_card",
                 "shop": parts[0],
-                "amount": int(amount_str),
+                "amount": float(amount_str),
+                "currency": parts[2].lower(),
             }
 
-    if text in EXISTING_CARDS:
-        return {"action": "show_limits", "card": text}
+    # Show limits (match by card name)
+    for card in CARDS:
+        if text == card.get_name().lower():
+            return {"action": "show_limits", "card": card}
 
     return {"action": "unknown"}
