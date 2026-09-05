@@ -4,6 +4,9 @@ from telegram import Update
 from telegram.ext import ApplicationBuilder, ContextTypes, CommandHandler, MessageHandler, filters
 from src.parser import parse_input
 from src.card import CARDS
+from src.database import init_db, add_shop, delete_shop, get_shop_mcc
+
+conn = None
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -39,13 +42,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 
 def handle_recommend_card(update, shop: str, amount: float, currency: str):
-    dummy_mcc = "5411"
+    mcc = get_shop_mcc(conn, shop)
+    if mcc is None:
+        update.message.reply_text(f"Shop {shop} not found. Add it with: add location {shop} [MCC]")
+        return
 
     best_card = None
     best_reward = 0
 
     for card in CARDS:
-        reward = card.calculate_reward(dummy_mcc, currency, amount)
+        reward = card.calculate_reward(mcc, currency, amount)
         if reward > best_reward:
             best_reward = reward
             best_card = card
@@ -63,11 +69,16 @@ def handle_show_limits(update, card):
 
 
 def handle_add_location(update, shop, mcc):
+    add_shop(conn, shop, mcc)
     update.message.reply_text(f"Added {shop} with MCC {mcc}")
 
 
 def handle_delete_location(update, shop):
-    update.message.reply_text(f"Deleted {shop}")
+    deleted = delete_shop(conn, shop)
+    if deleted:
+        update.message.reply_text(f"Deleted {shop}")
+    else:
+        update.message.reply_text(f"Shop {shop} not found")
 
 
 def handle_unknown(update):
@@ -79,9 +90,10 @@ if __name__ == '__main__':
     from pathlib import Path
     load_dotenv(Path.home() / ".env-storage" / "credit-card-telegram-bot" / ".env")
 
-    application = ApplicationBuilder().token(os.getenv("BOT_TOKEN")).build()
+    DB_PATH = Path(__file__).parent.parent / "credit_card_bot.db"
+    conn = init_db(DB_PATH)
 
+    application = ApplicationBuilder().token(os.getenv("BOT_TOKEN")).build()
     application.add_handler(CommandHandler('start', start))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-
     application.run_polling()
