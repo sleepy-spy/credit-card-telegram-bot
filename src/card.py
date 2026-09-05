@@ -32,6 +32,9 @@ class UOBPrviMiles(Card):
 
     REGIONAL_CURRENCIES = {"idr", "myr", "thb", "vnd"}
 
+    FOREIGN_TX_FEE = 0.0325
+    COST_PER_MILE_THRESHOLD = 1.5
+
     def get_name(self) -> str:
         return "UOB PRVI Miles"
 
@@ -44,7 +47,14 @@ class UOBPrviMiles(Card):
             return 0
 
         rate = self._get_rate(currency)
-        return round(rounded * rate)
+        miles = round(rounded * rate)
+
+        if currency != "sgd":
+            cost_per_mile = (self.FOREIGN_TX_FEE / rate) * 100
+            if cost_per_mile >= self.COST_PER_MILE_THRESHOLD:
+                return 0
+
+        return miles
 
     def _get_rate(self, currency: str) -> float:
         if currency == "sgd":
