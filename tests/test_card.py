@@ -202,3 +202,50 @@ def test_excluded_mcc_returns_zero_even_with_high_amount():
 def test_get_name():
     card = UOBPrviMiles()
     assert card.get_name() == "UOB PRVI Miles"
+
+
+# --- Foreign Transaction Fee Tests ---
+
+
+def test_local_skips_fee_check():
+    card = UOBPrviMiles()
+    assert card.calculate_reward("5411", "sgd", 100) == 140
+
+
+def test_foreign_regional_below_threshold():
+    card = UOBPrviMiles()
+    # cost_per_mile = 0.0325 / 3.0 * 100 = 1.08 cents (below 1.5)
+    assert card.calculate_reward("5411", "idr", 100) == 300
+
+
+def test_foreign_other_below_threshold():
+    card = UOBPrviMiles()
+    # cost_per_mile = 0.0325 / 2.4 * 100 = 1.35 cents (below 1.5)
+    assert card.calculate_reward("5411", "usd", 100) == 240
+
+
+def test_foreign_above_threshold():
+    card = UOBPrviMiles()
+    original_fee = card.FOREIGN_TX_FEE
+    card.FOREIGN_TX_FEE = 0.05
+    # cost_per_mile = 0.05 / 2.4 * 100 = 2.08 cents (above 1.5)
+    assert card.calculate_reward("5411", "usd", 100) == 0
+    card.FOREIGN_TX_FEE = original_fee
+
+
+def test_foreign_exact_threshold():
+    card = UOBPrviMiles()
+    original_fee = card.FOREIGN_TX_FEE
+    card.FOREIGN_TX_FEE = 0.036
+    # cost_per_mile = 0.036 / 2.4 * 100 = 1.5 cents (>= 1.5, return 0)
+    assert card.calculate_reward("5411", "usd", 100) == 0
+    card.FOREIGN_TX_FEE = original_fee
+
+
+def test_foreign_just_below_threshold():
+    card = UOBPrviMiles()
+    original_fee = card.FOREIGN_TX_FEE
+    card.FOREIGN_TX_FEE = 0.03599999976
+    # cost_per_mile < 1.5, miles awarded
+    assert card.calculate_reward("5411", "usd", 100) == 240
+    card.FOREIGN_TX_FEE = original_fee
